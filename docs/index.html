@@ -14,62 +14,112 @@
         .stat-card { background: #16161a; padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #232329; }
         .stat-card h3 { margin: 0 0 10px 0; color: #a0a0ab; font-size: 14px; }
         .stat-card .number { font-size: 32px; font-weight: bold; color: #ffcc00; }
+        .upload-section { background: #16161a; padding: 30px; border-radius: 14px; text-align: center; border: 2px dashed #ffcc00; margin-bottom: 25px; }
+        .btn-upload { background: #ffcc00; color: #0c0c0e; padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .controls-bar { background: #16161a; padding: 15px; border-radius: 14px; margin-bottom: 25px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
         .search-box { flex: 1; }
         .search-box input { width: 100%; padding: 12px; background: #0c0c0e; border: 1px solid #232329; border-radius: 8px; color: white; }
-        .filter-tabs { display: flex; gap: 8px; }
-        .tab-btn { background: #232329; color: #a0a0ab; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .tab-btn.active { background: #ffcc00; color: #0c0c0e; }
         .shows-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
-        .show-card { background: #16161a; border-radius: 12px; overflow: hidden; border: 1px solid #232329; display: flex; flex-direction: column; position: relative; }
-        .poster-wrapper { width: 100%; aspect-ratio: 2/3; background: linear-gradient(45deg, #1f1f2e, #16161a); display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px; }
-        .poster-letter { font-size: 44px; font-weight: bold; color: #ffcc00; opacity: 0.3; }
-        .card-badge { position: absolute; top: 10px; right: 10px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; color: white; z-index: 2; }
-        .badge-series { background: #007bff; }
-        .badge-movie { background: #dc3545; }
-        .card-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .show-card { background: #16161a; border-radius: 12px; overflow: hidden; border: 1px solid #232329; display: flex; flex-direction: column; }
+        .card-info { padding: 15px; flex-grow: 1; }
         .card-title { font-size: 14px; font-weight: bold; margin: 0 0 6px 0; color: white; }
         .card-detail { font-size: 12px; color: #ffcc00; margin-bottom: 8px; }
         .card-date { font-size: 11px; color: #71717a; border-top: 1px solid #232329; padding-top: 6px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>🎬 أرشيفي الفني التاريخي والأبدي - odsac</h1>
+        <h1>🎬 أرشيفي التاريخي الخاص - odsac</h1>
     </header>
 
     <div class="stats-row">
-        <div class="stat-card"><h3>المسلسلات والأفلام المؤرشفة</h3><div class="number" id="totalCount">23,256</div></div>
+        <div class="stat-card"><h3>إجمالي العناصر المؤرشفة</h3><div class="number" id="totalCount">0</div></div>
     </div>
 
-    <div class="controls-bar">
-        <div class="search-box"><input type="text" id="searchInput" oninput="renderGrid()" placeholder="ابحثي عن اسم مسلسل أو فيلم..."></div>
-        <div class="filter-tabs">
-            <button class="tab-btn active" id="tabAll" onclick="switchTab('all', this)">الكل</button>
-            <button class="tab-btn" id="tabShows" onclick="switchTab('shows', this)">المسلسلات</button>
-            <button class="tab-btn" id="tabMovies" onclick="switchTab('movies', this)">الأفلام</button>
+    <!-- قسم رفع الملفات الحقيقية الخاص بكِ فقط -->
+    <div class="upload-section" id="uploadSection">
+        <h3>مرحباً بكِ في أرشيفكِ. الرجاء اختيار ملفات TV Time الـ CSV الخاصة بكِ ليتم عرضها فوراً</h3>
+        <input type="file" id="fileInput" multiple accept=".csv" class="hidden" onchange="handleFiles(this.files)">
+        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">اختر الملفات الأربعة من جهازكِ</button>
+    </div>
+
+    <div id="archiveContent" class="hidden">
+        <div class="controls-bar">
+            <div class="search-box"><input type="text" id="searchInput" oninput="renderGrid()" placeholder="ابحثي في مسلسلاتكِ وأفلامكِ الحقيقية..."></div>
         </div>
+        <div class="shows-grid" id="showsGrid"></div>
     </div>
-
-    <div class="shows-grid" id="showsGrid"></div>
 </div>
 
 <script>
-    const archiveData = [
-        {"type":"show","title":"Breaking Bad","detail":"الموسم 5 • الحلقة 16","date":"2024-05-12"},
-        {"type":"show","title":"Game of Thrones","detail":"الموسم 8 • الحلقة 6","date":"2023-11-22"},
-        {"type":"show","title":"Attack on Titan","detail":"الموسم 4 • الحلقة 28","date":"2024-01-15"},
-        {"type":"show","title":"Better Call Saul","detail":"الموسم 6 • الحلقة 13","date":"2024-02-20"},
-        {"type":"movie","title":"Interstellar","detail":"فيلم سينمائي","date":"2025-01-05"},
-        {"type":"movie","title":"Inception","detail":"فيلم سينمائي","date":"2024-08-11"}
-    ];
+    let allData = [];
 
-    let currentFilter = 'all';
+    function handleFiles(files) {
+        if (!files.length) return;
+        let filesProcessed = 0;
 
-    function initArchive() {
-        renderGrid();
+        for (let i = 0; i < files.length; i++) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseCSV(text);
+                filesProcessed++;
+                
+                if (filesProcessed === files.length) {
+                    document.getElementById('uploadSection').classList.add('hidden');
+                    document.getElementById('archiveContent').classList.remove('hidden');
+                    document.getElementById('totalCount').innerText = allData.length.toLocaleString();
+                    renderGrid();
+                }
+            };
+            reader.readAsText(files[i]);
+        }
+    }
+
+    function parseCSV(text) {
+        const lines = text.split('\n');
+        if (lines.length < 2) return;
+
+        // فحص نوع الملف بناءً على العناوين
+        const header = lines[0].toLowerCase();
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            
+            // تقسيم السطر مع مراعاة الفواصل داخل علامات التنصيص
+            const parts = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            
+            if (header.includes('episode_title') || header.includes('episode_number')) {
+                // ملف حلقات مسلسل
+                let showTitle = parts[1] ? parts[1].replace(/"/g, '') : 'غير معروف';
+                let epNum = parts[2] ? parts[2].replace(/"/g, '') : '';
+                let seasonNum = parts[3] ? parts[3].replace(/"/g, '') : '';
+                let date = parts[4] ? parts[4].replace(/"/g, '').split(' ')[0] : '';
+                
+                if(showTitle !== 'غير معروف') {
+                    allData.push({
+                        title: showTitle,
+                        detail: `الموسم ${seasonNum} • الحلقة ${epNum}`,
+                        date: date || 'بدون تاريخ'
+                    });
+                }
+            } else if (header.includes('movie_title')) {
+                // ملف أفلام
+                let movieTitle = parts[1] ? parts[1].replace(/"/g, '') : 'غير معروف';
+                let date = parts[2] ? parts[2].replace(/"/g, '').split(' ')[0] : '';
+                
+                if(movieTitle !== 'غير معروف') {
+                    allData.push({
+                        title: movieTitle,
+                        detail: `فيلم سينمائي`,
+                        date: date || 'بدون تاريخ'
+                    });
+                }
+            }
+        }
     }
 
     function renderGrid() {
@@ -77,9 +127,7 @@
         grid.innerHTML = '';
         const searchVal = document.getElementById('searchInput').value.toLowerCase();
 
-        let filtered = archiveData.filter(item => {
-            if (currentFilter === 'shows' && item.type !== 'show') return false;
-            if (currentFilter === 'movies' && item.type !== 'movie') return false;
+        let filtered = allData.filter(item => {
             if (searchVal && !item.title.toLowerCase().includes(searchVal)) return false;
             return true;
         });
@@ -88,8 +136,6 @@
             const card = document.createElement('div');
             card.className = 'show-card';
             card.innerHTML = `
-                <div class="card-badge ${item.type === 'show' ? 'badge-series' : 'badge-movie'}">${item.type === 'show' ? 'مسلسل' : 'فيلم'}</div>
-                <div class="poster-wrapper"><div class="poster-letter">${item.title.charAt(0).toUpperCase()}</div></div>
                 <div class="card-info">
                     <h4 class="card-title">${item.title}</h4>
                     <div class="card-detail">${item.detail}</div>
@@ -99,15 +145,6 @@
             grid.appendChild(card);
         });
     }
-
-    function switchTab(type, btn) {
-        currentFilter = type;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderGrid();
-    }
-
-    window.onload = initArchive;
 </script>
 </body>
 </html>
