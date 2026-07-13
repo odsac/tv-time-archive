@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أرشيفي الشخصي - TV Time Archive</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #141414; color: #ffffff; margin: 0; padding: 20px; direction: rtl; }
+        .container { max-width: 1100px; margin: 0 auto; background-color: #1f1f1f; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        h1 { color: #ffcc00; text-align: center; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { text-align: center; color: #aaaaaa; margin-bottom: 30px; font-size: 16px; }
+        .upload-box { border: 2px dashed #ffcc00; padding: 30px; text-align: center; border-radius: 8px; background-color: #2a2a2a; margin-bottom: 30px; cursor: pointer; }
+        .upload-btn { background-color: #ffcc00; color: #141414; padding: 10px 25px; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; margin-top: 10px; display: inline-block; }
+        .stats-grid { display: block; margin-bottom: 30px; text-align: center; }
+        .stat-card { display: inline-block; width: 28%; background-color: #2a2a2a; padding: 20px; border-radius: 8px; margin: 1%; border-top: 4px solid #ffcc00; }
+        .stat-card h3 { margin: 0 0 10px 0; color: #aaaaaa; font-size: 16px; }
+        .stat-card .number { font-size: 32px; font-weight: bold; color: #ffcc00; }
+        .controls { margin-bottom: 20px; background-color: #2a2a2a; padding: 15px; border-radius: 8px; }
+        .search-input { width: 60%; padding: 10px; border-radius: 5px; border: 1px solid #444; background-color: #1f1f1f; color: white; font-size: 15px; }
+        .filter-btn { background-color: #444444; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px; }
+        .filter-btn.active { background-color: #ffcc00; color: #141414; font-weight: bold; }
+        .export-btn { background-color: #00cc66; color: white; padding: 10px 20px; border: none; border-radius: 5px; float: left; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: right; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #333; }
+        th { background-color: #2a2a2a; color: #ffcc00; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-show { background-color: #3399ff; color: white; }
+        .badge-movie { background-color: #ff5050; color: white; }
+        .no-data { text-align: center; padding: 40px; color: #888888; }
+        .clearfix::after { content: ""; clear: both; display: table; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎬 مستودع أرشيف تفاعلات TV Time الشخصي</h1>
+    <div class="subtitle">مكانك المستقل والآمن لحفظ تاريخ مشاهداتك ونقله لأي منصة مستقبلية بضغطة زر</div>
+    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+        <p style="font-size: 18px; margin: 0 0 10px 0;">اضغط هنا لاختيار ملف الـ <strong>JSON</strong> الخاص بـ TV Time من جوالك</p>
+        <button class="upload-btn">اختر الملف</button>
+        <input type="file" id="fileInput" accept=".json">
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card"><h3>إجمالي الحلقات</h3><div class="number" id="episodesCount">0</div></div>
+        <div class="stat-card"><h3>إجمالي الأفلام</h3><div class="number" id="moviesCount">0</div></div>
+        <div class="stat-card"><h3>الحالة</h3><div class="number" style="font-size: 20px; color: #ffcc00;" id="statusText">بانتظار ملف الـ JSON</div></div>
+    </div>
+    <div class="controls clearfix">
+        <input type="text" class="search-input" id="searchInput" placeholder="ابحث عن مسلسل أو فيلم...">
+        <button class="filter-btn active" id="btnAll">الكل</button>
+        <button class="filter-btn" id="btnShows">المسلسلات</button>
+        <button class="filter-btn" id="btnMovies">الأفلام</button>
+        <button class="export-btn" onclick="exportBackup()">⬇️ تصدير البيانات</button>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>النوع</th><th>العنوان</th><th>التفاصيل</th><th>التاريخ</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="4" class="no-data">يرجى رفع ملف JSON لتظهر تفاعلاتك كاملة هنا.</td></tr></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    let archiveData = [];
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                let data = JSON.parse(evt.target.result);
+                document.getElementById('statusText').innerText = "تم التحميل بنجاح ✔️";
+                document.getElementById('statusText').style.color = "#00cc66";
+                archiveData = [];
+                let episodes = data.episodes || data.watched_episodes || [];
+                let movies = data.movies || data.watched_movies || [];
+                episodes.forEach(ep => { archiveData.push({ type: 'show', title: ep.show_name || ep.title || 'مسلسل', detail: `الموسم ${ep.season_number || '?'} - الحلقة ${ep.episode_number || '?'}`, date: ep.watched_at || ep.date || 'غير محدد' }); });
+                movies.forEach(m => { archiveData.push({ type: 'movie', title: m.movie_name || m.title || 'فيلم', detail: 'فيلم سينمائي', date: m.watched_at || m.date || 'غير محدد' }); });
+                document.getElementById('episodesCount').innerText = episodes.length.toLocaleString();
+                document.getElementById('moviesCount').innerText = movies.length.toLocaleString();
+                renderTable(archiveData);
+            } catch(err) { alert("خطأ في قراءة الملف."); }
+        };
+        reader.readAsText(file);
+    });
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="no-data">لا توجد نتائج.</td></tr>'; return; }
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><span class="badge badge-${item.type === 'show' ? 'show' : 'movie'}">${item.type === 'show' ? 'مسلسل' : 'فيلم'}</span></td><td>${item.title}</td><td>${item.detail}</td><td>${item.date}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+</script>
+</body>
+</html>
