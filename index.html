@@ -34,22 +34,22 @@
 <body>
 <div class="container">
     <h1>🎬 مستودع أرشيف تفاعلات TV Time الشخصي</h1>
-    <div class="subtitle">يمكنكِ تحديد واختيار عدة ملفات معاً (الحلقات والأفلام والقوائم) ليتم دمجها فوراً</div>
+    <div class="subtitle">حددي جميع ملفات الـ CSV المفكوكة معاً ليقوم الموقع بدمجها وعرضها فوراً</div>
     
     <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-        <p style="font-size: 18px; margin: 0 0 10px 0;">اضغطي هنا وحددي <strong>جميع الملفات المفكوكة معاً</strong> في نفس الوقت</p>
-        <button class="upload-btn">اختر الملفات المدمجة</button>
-        <input type="file" id="fileInput" multiple accept=".json,.csv">
+        <p style="font-size: 18px; margin: 0 0 10px 0;">اضغطي هنا وحددي <strong>جميع ملفات الـ CSV المفكوكة</strong> في نفس الوقت</p>
+        <button class="upload-btn">اختر الملفات معاً</button>
+        <input type="file" id="fileInput" multiple accept=".csv">
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card"><h3>إجمالي العناصر المدمجة</h3><div class="number" id="totalCount">0</div></div>
-        <div class="stat-card"><h3>عدد الملفات المرفوعة</h3><div class="number" id="filesUploadedCount">0</div></div>
-        <div class="stat-card"><h3>الحالة</h3><div class="number" style="font-size: 18px; color: #ffcc00;" id="statusText">بانتظار الملفات</div></div>
+        <div class="stat-card"><h3>الحلقات المشاهدة</h3><div class="number" id="episodesCount">0</div></div>
+        <div class="stat-card"><h3>الأفلام المؤرشفة</h3><div class="number" id="moviesCount">0</div></div>
+        <div class="stat-card"><h3>الحالة</h3><div class="number" style="font-size: 18px; color: #ffcc00;" id="statusText">بانتظار ملفات الأرشيف</div></div>
     </div>
 
     <div class="controls clearfix">
-        <input type="text" class="search-input" id="searchInput" placeholder="ابحث في الأرشيف المدمج...">
+        <input type="text" class="search-input" id="searchInput" placeholder="ابحث عن مسلسل أو فيلم في الأرشيف المدمج...">
         <button class="filter-btn active" id="btnAll">الكل</button>
         <button class="filter-btn" id="btnShows">المسلسلات</button>
         <button class="filter-btn" id="btnMovies">الأفلام</button>
@@ -61,12 +61,12 @@
                 <tr>
                     <th>النوع</th>
                     <th>العنوان</th>
-                    <th>التفاصيل</th>
+                    <th>التفاصيل / الموسم والحلقة</th>
                     <th>التاريخ</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <tr><td colspan="4" class="no-data">يرجى رفع ملفات الأرشيف المصدّرة لتظهر بياناتك هنا المدمجة.</td></tr>
+                <tr><td colspan="4" class="no-data">يرجى رفع ملفات CSV المصدّرة لتظهر بياناتك المدمجة هنا.</td></tr>
             </tbody>
         </table>
     </div>
@@ -75,91 +75,100 @@
 <script>
     let archiveData = [];
     let currentFilter = 'all';
-    let processedFilesCount = 0;
+    let totalEpisodes = 0;
+    let totalMovies = 0;
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
         archiveData = [];
-        processedFilesCount = 0;
-        document.getElementById('statusText').innerText = "جاري قراءة ودمج الملفات... ⏳";
+        totalEpisodes = 0;
+        totalMovies = 0;
+        
+        document.getElementById('statusText').innerText = "جاري دمج وقراءة الملفات... ⏳";
         document.getElementById('statusText').style.color = "#ffcc00";
+
+        let filesProcessed = 0;
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const reader = new FileReader();
+            const fileName = file.name.toLowerCase();
 
             reader.onload = function(evt) {
-                const content = evt.target.result;
-                const fileName = file.name.toLowerCase();
+                const text = evt.target.result;
+                const lines = text.split('\n');
+                
+                // معرفة العناوين (Headers) لترتيب الأعمدة
+                if (lines.length > 1) {
+                    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                    
+                    for (let j = 1; j < lines.length; j++) {
+                        if (!lines[j].trim()) continue;
+                        
+                        // تقسيم السطر مع مراعاة الفواصل داخل علامات التنصيص
+                        const matches = lines[j].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[j].split(',');
+                        const cleanCols = matches.map(c => c.trim().replace(/"/g, ''));
 
-                try {
-                    if (fileName.endsWith('.json')) {
-                        const parsed = JSON.parse(content);
-                        if (Array.isArray(parsed)) {
-                            parsed.forEach(item => {
-                                if (fileName.includes('episode')) {
-                                    archiveData.push({
-                                        type: 'show',
-                                        title: item.show_name || item.title || 'مسلسل',
-                                        detail: `الموسم ${item.season_number || '?'} - الحلقة ${item.episode_number || '?'}`,
-                                        date: item.watched_at || item.date || 'غير محدد'
-                                    });
-                                } else if (fileName.includes('movie')) {
-                                    archiveData.push({
-                                        type: 'movie',
-                                        title: item.movie_name || item.title || 'فيلم',
-                                        detail: 'فيلم سينمائي',
-                                        date: item.watched_at || item.date || 'غير محدد'
-                                    });
-                                } else {
-                                    archiveData.push({
-                                        type: 'list',
-                                        title: item.name || item.title || 'عنصر',
-                                        detail: 'بيانات مخصصة',
-                                        date: item.created_at || 'غير محدد'
-                                    });
-                                }
-                            });
-                        }
-                    } else if (fileName.endsWith('.csv')) {
-                        // معالجة ملفات CSV البسيطة
-                        const lines = content.split('\n');
-                        for(let j = 1; j < lines.length; j++) {
-                            if (!lines[j].trim()) continue;
-                            const columns = lines[j].split(',');
+                        if (fileName.includes('episode')) {
+                            // ملف الحلقات المشاهدة
+                            let showName = cleanCols[0] || 'مسلسل';
+                            let seasonNum = cleanCols[1] || '?';
+                            let episodeNum = cleanCols[2] || '?';
+                            let watchedAt = cleanCols[3] || 'غير محدد';
+                            
                             archiveData.push({
-                                type: fileName.includes('movie') ? 'movie' : (fileName.includes('series') || fileName.includes('show') ? 'show' : 'list'),
-                                title: columns[0] ? columns[0].replace(/"/g, '') : 'عنصر أرشيفي',
-                                detail: fileName.includes('series') ? 'مسلسل متابع' : 'تفاصيل الأرشيف',
-                                date: 'مستورد من CSV'
+                                type: 'show',
+                                title: showName,
+                                detail: `الموسم ${seasonNum} - الحلقة ${episodeNum}`,
+                                date: watchedAt
                             });
+                            totalEpisodes++;
+                        } else if (fileName.includes('movie')) {
+                            // ملف الأفلام
+                            let movieName = cleanCols[0] || 'فيلم';
+                            let watchedAt = cleanCols[1] || 'غير محدد';
+                            
+                            archiveData.push({
+                                type: 'movie',
+                                title: movieName,
+                                detail: 'فيلم سينمائي',
+                                date: watchedAt
+                            });
+                            totalMovies++;
+                        } else if (fileName.includes('series') && !fileName.includes('episode')) {
+                            // ملف المسلسلات المتابعة العامة (إذا لم تكن مضافة في الحلقات)
+                            if (cleanCols[0]) {
+                                archiveData.push({
+                                    type: 'show',
+                                    title: cleanCols[0],
+                                    detail: 'مسلسل في القائمة',
+                                    date: 'مضاف سابقاً'
+                                });
+                            }
                         }
                     }
-                } catch (err) {
-                    console.error("خطأ في قراءة ملف: " + file.name, err);
                 }
 
-                processedFilesCount++;
-                if (processedFilesCount === files.length) {
-                    finalizeData();
+                filesProcessed++;
+                if (filesProcessed === files.length) {
+                    showResults();
                 }
             };
-
             reader.readAsText(file);
         }
     });
 
-    function finalizeData() {
-        document.getElementById('totalCount').innerText = archiveData.length.toLocaleString();
-        document.getElementById('filesUploadedCount').innerText = processedFilesCount;
+    function showResults() {
+        document.getElementById('episodesCount').innerText = totalEpisodes.toLocaleString();
+        document.getElementById('moviesCount').innerText = totalMovies.toLocaleString();
         
         if (archiveData.length > 0) {
-            document.getElementById('statusText').innerText = "تم دمج الأرشيف بنجاح! ✔️";
+            document.getElementById('statusText').innerText = "تم دمج كل ملفاتك بنجاح! ✔️";
             document.getElementById('statusText').style.color = "#00cc66";
         } else {
-            document.getElementById('statusText').innerText = "الملفات غير مدعومة ❌";
+            document.getElementById('statusText').innerText = "الملفات فارغة ❌";
         }
         renderTable();
     }
@@ -183,13 +192,8 @@
 
         filtered.forEach(item => {
             const tr = document.createElement('tr');
-            let badgeClass = 'badge-list';
-            let typeName = 'قائمة';
-            if(item.type === 'show') { badgeClass = 'badge-show'; typeName = 'مسلسل'; }
-            if(item.type === 'movie') { badgeClass = 'badge-movie'; typeName = 'فيلم'; }
-
             tr.innerHTML = `
-                <td><span class="badge ${badgeClass}">${typeName}</span></td>
+                <td><span class="badge badge-${item.type === 'show' ? 'show' : 'movie'}">${item.type === 'show' ? 'مسلسل' : 'فيلم'}</span></td>
                 <td><strong>${item.title}</strong></td>
                 <td>${item.detail}</td>
                 <td>${item.date}</td>
