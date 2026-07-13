@@ -15,17 +15,16 @@
         .stat-card h3 { margin: 0 0 10px 0; color: #a0a0ab; font-size: 14px; }
         .stat-card .number { font-size: 32px; font-weight: bold; color: #ffcc00; }
         .upload-section { background: #16161a; padding: 30px; border-radius: 14px; text-align: center; border: 2px dashed #ffcc00; margin-bottom: 25px; }
-        .btn-upload { background: #ffcc00; color: #0c0c0e; padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-upload { background: #ffcc00; color: #0c0c0e; padding: 15px 40px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; display: inline-block; margin-top: 10px; }
         .controls-bar { background: #16161a; padding: 15px; border-radius: 14px; margin-bottom: 25px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
         .search-box { flex: 1; }
-        .search-box input { width: 100%; padding: 12px; background: #0c0c0e; border: 1px solid #232329; border-radius: 8px; color: white; }
+        .search-box input { width: 100%; padding: 12px; background: #0c0c0e; border: 1px solid #232329; border-radius: 8px; color: white; font-size: 16px; }
         .shows-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
-        .show-card { background: #16161a; border-radius: 12px; overflow: hidden; border: 1px solid #232329; display: flex; flex-direction: column; }
-        .card-info { padding: 15px; flex-grow: 1; }
+        .show-card { background: #16161a; border-radius: 12px; overflow: hidden; border: 1px solid #232329; display: flex; flex-direction: column; padding: 15px; }
         .card-title { font-size: 14px; font-weight: bold; margin: 0 0 6px 0; color: white; }
         .card-detail { font-size: 12px; color: #ffcc00; margin-bottom: 8px; }
         .card-date { font-size: 11px; color: #71717a; border-top: 1px solid #232329; padding-top: 6px; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -39,11 +38,10 @@
         <div class="stat-card"><h3>إجمالي العناصر المؤرشفة</h3><div class="number" id="totalCount">0</div></div>
     </div>
 
-    <!-- قسم رفع الملفات الحقيقية الخاص بكِ فقط -->
     <div class="upload-section" id="uploadSection">
-        <h3>مرحباً بكِ في أرشيفكِ. الرجاء اختيار ملفات TV Time الـ CSV الخاصة بكِ ليتم عرضها فوراً</h3>
+        <h3>الرجاء الضغط على الزر بالأسفل واختيار ملفات الـ CSV الأربعة الحقيقية</h3>
         <input type="file" id="fileInput" multiple accept=".csv" class="hidden" onchange="handleFiles(this.files)">
-        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">اختر الملفات الأربعة من جهازكِ</button>
+        <button class="btn-upload" type="button" onclick="document.getElementById('fileInput').click()">اضغطي هنا واختاري الملفات</button>
     </div>
 
     <div id="archiveContent" class="hidden">
@@ -58,21 +56,25 @@
     let allData = [];
 
     function handleFiles(files) {
-        if (!files.length) return;
+        if (!files || !files.length) return;
         let filesProcessed = 0;
+        allData = []; // تصفير البيانات القديمة
 
         for (let i = 0; i < files.length; i++) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const text = e.target.result;
-                parseCSV(text);
+                parseCSV(e.target.result);
                 filesProcessed++;
                 
                 if (filesProcessed === files.length) {
-                    document.getElementById('uploadSection').classList.add('hidden');
-                    document.getElementById('archiveContent').classList.remove('hidden');
-                    document.getElementById('totalCount').innerText = allData.length.toLocaleString();
-                    renderGrid();
+                    if (allData.length > 0) {
+                        document.getElementById('uploadSection').classList.add('hidden');
+                        document.getElementById('archiveContent').classList.remove('hidden');
+                        document.getElementById('totalCount').innerText = allData.length.toLocaleString();
+                        renderGrid();
+                    } else {
+                        alert("لم نتمكن من قراءة بيانات داخل الملفات، تأكدي أنها ملفات CSV الصحيحة من TV Time.");
+                    }
                 }
             };
             reader.readAsText(files[i]);
@@ -82,42 +84,32 @@
     function parseCSV(text) {
         const lines = text.split('\n');
         if (lines.length < 2) return;
-
-        // فحص نوع الملف بناءً على العناوين
         const header = lines[0].toLowerCase();
         
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
-            
-            // تقسيم السطر مع مراعاة الفواصل داخل علامات التنصيص
             const parts = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
             
-            if (header.includes('episode_title') || header.includes('episode_number')) {
-                // ملف حلقات مسلسل
-                let showTitle = parts[1] ? parts[1].replace(/"/g, '') : 'غير معروف';
+            if (header.includes('episode_title') || header.includes('episode_number') || header.includes('show_name')) {
+                let showTitle = parts[1] ? parts[1].replace(/"/g, '') : (parts[0] ? parts[0].replace(/"/g, '') : 'غير معروف');
                 let epNum = parts[2] ? parts[2].replace(/"/g, '') : '';
                 let seasonNum = parts[3] ? parts[3].replace(/"/g, '') : '';
                 let date = parts[4] ? parts[4].replace(/"/g, '').split(' ')[0] : '';
                 
-                if(showTitle !== 'غير معروف') {
-                    allData.push({
-                        title: showTitle,
-                        detail: `الموسم ${seasonNum} • الحلقة ${epNum}`,
-                        date: date || 'بدون تاريخ'
-                    });
-                }
-            } else if (header.includes('movie_title')) {
-                // ملف أفلام
-                let movieTitle = parts[1] ? parts[1].replace(/"/g, '') : 'غير معروف';
+                allData.push({
+                    title: showTitle,
+                    detail: epNum ? `الموسم ${seasonNum} • الحلقة ${epNum}` : `حلقة مشاهدة`,
+                    date: date || 'بدون تاريخ'
+                });
+            } else if (header.includes('movie_title') || header.includes('movie')) {
+                let movieTitle = parts[1] ? parts[1].replace(/"/g, '') : (parts[0] ? parts[0].replace(/"/g, '') : 'غير معروف');
                 let date = parts[2] ? parts[2].replace(/"/g, '').split(' ')[0] : '';
                 
-                if(movieTitle !== 'غير معروف') {
-                    allData.push({
-                        title: movieTitle,
-                        detail: `فيلم سينمائي`,
-                        date: date || 'بدون تاريخ'
-                    });
-                }
+                allData.push({
+                    title: movieTitle,
+                    detail: `فيلم سينمائي`,
+                    date: date || 'بدون تاريخ'
+                });
             }
         }
     }
@@ -128,19 +120,16 @@
         const searchVal = document.getElementById('searchInput').value.toLowerCase();
 
         let filtered = allData.filter(item => {
-            if (searchVal && !item.title.toLowerCase().includes(searchVal)) return false;
-            return true;
+            return !searchVal || item.title.toLowerCase().includes(searchVal);
         });
 
         filtered.forEach(item => {
             const card = document.createElement('div');
             card.className = 'show-card';
             card.innerHTML = `
-                <div class="card-info">
-                    <h4 class="card-title">${item.title}</h4>
-                    <div class="card-detail">${item.detail}</div>
-                    <div class="card-date">🗓️ ${item.date}</div>
-                </div>
+                <h4 class="card-title">${item.title}</h4>
+                <div class="card-detail">${item.detail}</div>
+                <div class="card-date">🗓️ ${item.date}</div>
             `;
             grid.appendChild(card);
         });
