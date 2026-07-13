@@ -3,136 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أرشيفي التاريخي الدائم - TV Time</title>
+    <title>توليد الأرشيف الدائم - TV Time</title>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: sans-serif; background-color: #0c0c0e; color: #f5f5f7; margin: 0; padding: 20px; direction: rtl; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        header { text-align: center; padding: 20px; background: #16161a; border-radius: 14px; margin-bottom: 25px; border: 1px solid #232329; }
-        header h1 { margin: 0; color: #ffcc00; font-size: 24px; }
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: #16161a; padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #232329; }
-        .stat-card h3 { margin: 0 0 10px 0; color: #a0a0ab; font-size: 14px; }
-        .stat-card .number { font-size: 32px; font-weight: bold; color: #ffcc00; }
-        .upload-section { background: #16161a; padding: 30px; border-radius: 14px; text-align: center; border: 2px dashed #ffcc00; margin-bottom: 25px; }
-        .btn-upload { background: #ffcc00; color: #0c0c0e; padding: 15px 40px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; display: inline-block; margin-top: 10px; }
-        .controls-bar { background: #16161a; padding: 15px; border-radius: 14px; margin-bottom: 25px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-        .search-box { flex: 1; }
-        .search-box input { width: 100%; padding: 12px; background: #0c0c0e; border: 1px solid #232329; border-radius: 8px; color: white; font-size: 16px; }
-        .shows-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
-        .show-card { background: #16161a; border-radius: 12px; overflow: hidden; border: 1px solid #232329; display: flex; flex-direction: column; padding: 15px; }
-        .card-title { font-size: 14px; font-weight: bold; margin: 0 0 6px 0; color: white; }
-        .card-detail { font-size: 12px; color: #ffcc00; margin-bottom: 8px; }
-        .card-date { font-size: 11px; color: #71717a; border-top: 1px solid #232329; padding-top: 6px; }
-        .hidden { display: none !important; }
+        body { font-family: sans-serif; background-color: #0c0c0e; color: #f5f5f7; padding: 20px; text-align: center; direction: rtl; }
+        .container { max-width: 800px; margin: 0 auto; background: #16161a; padding: 30px; border-radius: 12px; border: 1px solid #232329; }
+        h1 { color: #ffcc00; font-size: 24px; }
+        .btn { background: #ffcc00; color: #0c0c0e; padding: 12px 30px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; }
+        .status { margin: 20px 0; font-weight: bold; color: #00cc66; }
+        textarea { width: 100%; height: 300px; background: #0c0c0e; color: #00ffcc; border: 1px solid #232329; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 12px; text-align: left; direction: ltr; margin-top: 15px; display: none; }
+        .copy-btn { background: #00cc66; color: white; display: none; margin: 15px auto; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>🎬 أرشيفي التاريخي الخاص - odsac</h1>
-    </header>
-
-    <div class="stats-row">
-        <div class="stat-card"><h3>إجمالي العناصر المؤرشفة</h3><div class="number" id="totalCount">0</div></div>
-    </div>
-
-    <div class="upload-section" id="uploadSection">
-        <h3>الرجاء الضغط على الزر بالأسفل واختيار ملفات الـ CSV الأربعة الحقيقية</h3>
-        <input type="file" id="fileInput" multiple accept=".csv" class="hidden" onchange="handleFiles(this.files)">
-        <button class="btn-upload" type="button" onclick="document.getElementById('fileInput').click()">اضغطي هنا واختاري الملفات</button>
-    </div>
-
-    <div id="archiveContent" class="hidden">
-        <div class="controls-bar">
-            <div class="search-box"><input type="text" id="searchInput" oninput="renderGrid()" placeholder="ابحثي في مسلسلاتكِ وأفلامكِ الحقيقية..."></div>
-        </div>
-        <div class="shows-grid" id="showsGrid"></div>
-    </div>
+    <h1>🧬 محرك دمج وتثبيت الأرشيف التاريخي</h1>
+    <p>اضغطي على الزر بالأسفل وحددي ملفات الـ CSV الأربعة معاً ليقوم المتصفح بتوليد كود أرشيفكِ الصافي فوراُ.</p>
+    
+    <input type="file" id="fileInput" multiple accept=".csv" style="display:none;">
+    <button class="btn" onclick="document.getElementById('fileInput').click()">احترار ورفع الملفات الأربعة</button>
+    
+    <div class="status" id="status">بانتظار الملفات...</div>
+    
+    <button class="btn copy-btn" id="copyBtn" onclick="copyCode()">📋 اضغطي هنا لنسخ كود الأرشيف الجاهز</button>
+    <textarea id="outputTxt" readonly></textarea>
 </div>
 
 <script>
-    let allData = [];
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const files = e.target.files;
+        if(!files || files.length === 0) return;
 
-    function handleFiles(files) {
-        if (!files || !files.length) return;
         let filesProcessed = 0;
-        allData = []; // تصفير البيانات القديمة
+        let fileDataMap = {};
+        document.getElementById('status').innerText = "جاري الدمج وفك الأكواد المشفرة... ⏳";
 
         for (let i = 0; i < files.length; i++) {
+            const file = files[i];
             const reader = new FileReader();
-            reader.onload = function(e) {
-                parseCSV(e.target.result);
+            const name = file.name.toLowerCase();
+
+            reader.onload = function(evt) {
+                const text = evt.target.result;
+                const lines = text.split('\n');
+                let parsedRows = [];
+
+                for(let j=1; j<lines.length; j++) {
+                    if(!lines[j].trim()) continue;
+                    let cols = lines[j].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^["']|["']$/g, '').trim());
+                    parsedRows.push(cols);
+                }
+
+                if (name.includes('episodes')) fileDataMap['episodes'] = parsedRows;
+                else if (name.includes('series') && !name.includes('episodes')) fileDataMap['series'] = parsedRows;
+                else if (name.includes('movie')) fileDataMap['movies'] = parsedRows;
+                else if (name.includes('list')) fileDataMap['lists'] = parsedRows;
+
                 filesProcessed++;
-                
                 if (filesProcessed === files.length) {
-                    if (allData.length > 0) {
-                        document.getElementById('uploadSection').classList.add('hidden');
-                        document.getElementById('archiveContent').classList.remove('hidden');
-                        document.getElementById('totalCount').innerText = allData.length.toLocaleString();
-                        renderGrid();
-                    } else {
-                        alert("لم نتمكن من قراءة بيانات داخل الملفات، تأكدي أنها ملفات CSV الصحيحة من TV Time.");
-                    }
+                    generateFinalJSON(fileDataMap);
                 }
             };
-            reader.readAsText(files[i]);
+            reader.readAsText(file);
         }
+    });
+
+    function generateFinalJSON(map) {
+        let seriesNames = {};
+        if (map['series']) {
+            map['series'].forEach(row => {
+                if (row.length >= 2) {
+                    if (row[0].includes('-')) seriesNames[row[0]] = row[1];
+                    else if (row[1].includes('-')) seriesNames[row[1]] = row[0];
+                }
+            });
+        }
+
+        let finalArchive = [];
+
+        if (map['episodes']) {
+            map['episodes'].forEach(row => {
+                if(row.length < 2) return;
+                let originalTitle = row[0];
+                let season = row[1] || '?';
+                let ep = row[2] || '?';
+                let date = row[3] || 'غير محدد';
+
+                let finalTitle = originalTitle;
+                if (seriesNames[finalTitle]) finalTitle = seriesNames[finalTitle];
+
+                if (finalTitle && !finalTitle.includes('-')) {
+                    let existing = finalArchive.find(x => x.title === finalTitle && x.type === 'show');
+                    if (!existing) {
+                        finalArchive.push({ type: 'show', title: finalTitle, detail: `الموسم ${season} • الحلقة ${ep}`, date: date });
+                    } else {
+                        existing.detail = `الموسم ${season} • الحلقة ${ep}`;
+                    }
+                }
+            });
+        }
+
+        if (map['movies']) {
+            map['movies'].forEach(row => {
+                if(row.length === 0) return;
+                let col0 = row[0] || '';
+                let col1 = row[1] || '';
+                let movieTitle = col0;
+                let watchDate = col1;
+
+                if (col0.includes('-') && col1 && !col1.includes('-') && isNaN(col1)) {
+                    movieTitle = col1;
+                    watchDate = row[2] || 'غير محدد';
+                }
+
+                if(movieTitle && !movieTitle.includes('-') && movieTitle !== 'undefined') {
+                    finalArchive.push({ type: 'movie', title: movieTitle, detail: 'فيلم سينمائي', date: watchDate });
+                }
+            });
+        }
+
+        const txtArea = document.getElementById('outputTxt');
+        txtArea.value = JSON.stringify(finalArchive, null, 4);
+        txtArea.style.display = 'block';
+        document.getElementById('copyBtn').style.display = 'block';
+        document.getElementById('status').innerText = "تم توليد البيانات بنجاح! 🎉";
     }
 
-    function parseCSV(text) {
-        const lines = text.split('\n');
-        if (lines.length < 2) return;
-        const header = lines[0].toLowerCase();
-        
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const parts = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            
-            if (header.includes('episode_title') || header.includes('episode_number') || header.includes('show_name')) {
-                let showTitle = parts[1] ? parts[1].replace(/"/g, '') : (parts[0] ? parts[0].replace(/"/g, '') : 'غير معروف');
-                let epNum = parts[2] ? parts[2].replace(/"/g, '') : '';
-                let seasonNum = parts[3] ? parts[3].replace(/"/g, '') : '';
-                let date = parts[4] ? parts[4].replace(/"/g, '').split(' ')[0] : '';
-                
-                allData.push({
-                    title: showTitle,
-                    detail: epNum ? `الموسم ${seasonNum} • الحلقة ${epNum}` : `حلقة مشاهدة`,
-                    date: date || 'بدون تاريخ'
-                });
-            } else if (header.includes('movie_title') || header.includes('movie')) {
-                let movieTitle = parts[1] ? parts[1].replace(/"/g, '') : (parts[0] ? parts[0].replace(/"/g, '') : 'غير معروف');
-                let date = parts[2] ? parts[2].replace(/"/g, '').split(' ')[0] : '';
-                
-                allData.push({
-                    title: movieTitle,
-                    detail: `فيلم سينمائي`,
-                    date: date || 'بدون تاريخ'
-                });
-            }
-        }
-    }
-
-    function renderGrid() {
-        const grid = document.getElementById('showsGrid');
-        grid.innerHTML = '';
-        const searchVal = document.getElementById('searchInput').value.toLowerCase();
-
-        let filtered = allData.filter(item => {
-            return !searchVal || item.title.toLowerCase().includes(searchVal);
-        });
-
-        filtered.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'show-card';
-            card.innerHTML = `
-                <h4 class="card-title">${item.title}</h4>
-                <div class="card-detail">${item.detail}</div>
-                <div class="card-date">🗓️ ${item.date}</div>
-            `;
-            grid.appendChild(card);
-        });
+    function copyCode() {
+        const txtArea = document.getElementById('outputTxt');
+        txtArea.select();
+        document.execCommand('copy');
+        alert('تم نسخ كود البيانات! الآن انتقلي للخطوة التالية لتثبيته.');
     }
 </script>
 </body>
