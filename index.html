@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>أرشيفي الشخصي - TV Time Archive</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #141414; color: #ffffff; margin: 0; padding: 20px; direction: rtl; }
@@ -17,10 +18,9 @@
         .stat-card h3 { margin: 0 0 10px 0; color: #aaaaaa; font-size: 16px; }
         .stat-card .number { font-size: 32px; font-weight: bold; color: #ffcc00; }
         .controls { margin-bottom: 20px; background-color: #2a2a2a; padding: 15px; border-radius: 8px; }
-        .search-input { width: 60%; padding: 10px; border-radius: 5px; border: 1px solid #444; background-color: #1f1f1f; color: white; font-size: 15px; }
+        .search-input { width: 50%; padding: 10px; border-radius: 5px; border: 1px solid #444; background-color: #1f1f1f; color: white; font-size: 15px; display: inline-block; }
         .filter-btn { background-color: #444444; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px; }
         .filter-btn.active { background-color: #ffcc00; color: #141414; font-weight: bold; }
-        .export-btn { background-color: #00cc66; color: white; padding: 10px 20px; border: none; border-radius: 5px; float: left; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: right; }
         th, td { padding: 12px 15px; border-bottom: 1px solid #333; }
         th { background-color: #2a2a2a; color: #ffcc00; }
@@ -34,63 +34,150 @@
 <body>
 <div class="container">
     <h1>🎬 مستودع أرشيف تفاعلات TV Time الشخصي</h1>
-    <div class="subtitle">مكانك المستقل والآمن لحفظ تاريخ مشاهداتك ونقله لأي منصة مستقبلية بضغطة زر</div>
+    <div class="subtitle">ارفع ملف الـ ZIP المضغوط مباشرة لتشاهد كامل تفاعلاتك ومسلسلاتك فوراً</div>
+    
     <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-        <p style="font-size: 18px; margin: 0 0 10px 0;">اضغط هنا لاختيار ملف الـ <strong>JSON</strong> الخاص بـ TV Time من جوالك</p>
-        <button class="upload-btn">اختر الملف</button>
-        <input type="file" id="fileInput" accept=".json">
+        <p style="font-size: 18px; margin: 0 0 10px 0;">اضغط هنا واختار ملف الـ <strong>ZIP</strong> (المف المضغوط الأساسي من التطبيق)</p>
+        <button class="upload-btn">اختر ملف ZIP</button>
+        <input type="file" id="fileInput" accept=".zip">
     </div>
+
     <div class="stats-grid">
-        <div class="stat-card"><h3>إجمالي الحلقات</h3><div class="number" id="episodesCount">0</div></div>
+        <div class="stat-card"><h3>إجمالي الحلقات المشاهدة</h3><div class="number" id="episodesCount">0</div></div>
         <div class="stat-card"><h3>إجمالي الأفلام</h3><div class="number" id="moviesCount">0</div></div>
-        <div class="stat-card"><h3>الحالة</h3><div class="number" style="font-size: 20px; color: #ffcc00;" id="statusText">بانتظار ملف الـ JSON</div></div>
+        <div class="stat-card"><h3>الحالة</h3><div class="number" style="font-size: 18px; color: #ffcc00;" id="statusText">بانتظار ملف الـ ZIP</div></div>
     </div>
+
     <div class="controls clearfix">
         <input type="text" class="search-input" id="searchInput" placeholder="ابحث عن مسلسل أو فيلم...">
         <button class="filter-btn active" id="btnAll">الكل</button>
         <button class="filter-btn" id="btnShows">المسلسلات</button>
         <button class="filter-btn" id="btnMovies">الأفلام</button>
-        <button class="export-btn" onclick="exportBackup()">⬇️ تصدير البيانات</button>
     </div>
+
     <div class="table-container">
         <table>
-            <thead><tr><th>النوع</th><th>العنوان</th><th>التفاصيل</th><th>التاريخ</th></tr></thead>
-            <tbody id="tableBody"><tr><td colspan="4" class="no-data">يرجى رفع ملف JSON لتظهر تفاعلاتك كاملة هنا.</td></tr></tbody>
+            <thead>
+                <tr>
+                    <th>النوع</th>
+                    <th>العنوان</th>
+                    <th>التفاصيل / الموسم والحلقة</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="4" class="no-data">يرجى رفع ملف ZIP المصدّر من تطبيق TV Time لتظهر بياناتك هنا.</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
+
 <script>
     let archiveData = [];
+    let currentFilter = 'all';
+
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
+
+        document.getElementById('statusText').innerText = "جاري قراءة وتحليل ملف ZIP... ⏳";
+        document.getElementById('statusText').style.color = "#ffcc00";
+
         const reader = new FileReader();
         reader.onload = function(evt) {
-            try {
-                let data = JSON.parse(evt.target.result);
-                document.getElementById('statusText').innerText = "تم التحميل بنجاح ✔️";
-                document.getElementById('statusText').style.color = "#00cc66";
+            JSZip.loadAsync(evt.target.result).then(async function(zip) {
+                let episodes = [];
+                let movies = [];
+
+                const epFile = Object.keys(zip.files).find(name => name.includes('watched_episodes.json') || name.includes('episodes.json'));
+                if (epFile) {
+                    const txt = await zip.files[epFile].async("string");
+                    episodes = JSON.parse(txt);
+                }
+
+                const movieFile = Object.keys(zip.files).find(name => name.includes('watched_movies.json') || name.includes('movies.json'));
+                if (movieFile) {
+                    const txt = await zip.files[movieFile].async("string");
+                    movies = JSON.parse(txt);
+                }
+
                 archiveData = [];
-                let episodes = data.episodes || data.watched_episodes || [];
-                let movies = data.movies || data.watched_movies || [];
-                episodes.forEach(ep => { archiveData.push({ type: 'show', title: ep.show_name || ep.title || 'مسلسل', detail: `الموسم ${ep.season_number || '?'} - الحلقة ${ep.episode_number || '?'}`, date: ep.watched_at || ep.date || 'غير محدد' }); });
-                movies.forEach(m => { archiveData.push({ type: 'movie', title: m.movie_name || m.title || 'فيلم', detail: 'فيلم سينمائي', date: m.watched_at || m.date || 'غير محدد' }); });
+                episodes.forEach(ep => {
+                    archiveData.push({
+                        type: 'show',
+                        title: ep.show_name || ep.title || 'مسلسل',
+                        detail: `الموسم ${ep.season_number || '?'} - الحلقة ${ep.episode_number || '?'}`,
+                        date: ep.watched_at || ep.date || 'غير محدد'
+                    });
+                });
+
+                movies.forEach(m => {
+                    archiveData.push({
+                        type: 'movie',
+                        title: m.movie_name || m.title || 'فيلم',
+                        detail: 'فيلم سينمائي',
+                        date: m.watched_at || m.date || 'غير محدد'
+                    });
+                });
+
                 document.getElementById('episodesCount').innerText = episodes.length.toLocaleString();
                 document.getElementById('moviesCount').innerText = movies.length.toLocaleString();
-                renderTable(archiveData);
-            } catch(err) { alert("خطأ في قراءة الملف."); }
+                
+                if(archiveData.length > 0) {
+                    document.getElementById('statusText').innerText = "تم تحميل الأرشيف بنجاح! ✔️";
+                    document.getElementById('statusText').style.color = "#00cc66";
+                } else {
+                    document.getElementById('statusText').innerText = "الملف فارغ أو غير صحيح ❌";
+                }
+
+                renderTable();
+            }).catch(err => {
+                alert("حدث خطأ أثناء فك ضغط الملف في المتصفح: " + err);
+                document.getElementById('statusText').innerText = "خطأ في قراءة الملف ❌";
+            });
         };
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
     });
-    function renderTable(data) {
+
+    function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-        if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="no-data">لا توجد نتائج.</td></tr>'; return; }
-        data.forEach(item => {
+        const searchTxt = document.getElementById('searchInput').value.toLowerCase();
+
+        let filtered = archiveData.filter(item => {
+            if (currentFilter === 'shows' && item.type !== 'show') return false;
+            if (currentFilter === 'movies' && item.type !== 'movie') return false;
+            if (searchTxt && !item.title.toLowerCase().includes(searchTxt)) return false;
+            return true;
+        });
+
+        if(filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="no-data">لا توجد نتائج تطابق البحث.</td></tr>';
+            return;
+        }
+
+        filtered.forEach(item => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><span class="badge badge-${item.type === 'show' ? 'show' : 'movie'}">${item.type === 'show' ? 'مسلسل' : 'فيلم'}</span></td><td>${item.title}</td><td>${item.detail}</td><td>${item.date}</td>`;
+            tr.innerHTML = `
+                <td><span class="badge badge-${item.type === 'show' ? 'show' : 'movie'}">${item.type === 'show' ? 'مسلسل' : 'فيلم'}</span></td>
+                <td><strong>${item.title}</strong></td>
+                <td>${item.detail}</td>
+                <td>${item.date}</td>
+            `;
             tbody.appendChild(tr);
         });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('btnAll').addEventListener('click', function() { switchFilter('all', this); });
+    document.getElementById('btnShows').addEventListener('click', function() { switchFilter('shows', this); });
+    document.getElementById('btnMovies').addEventListener('click', function() { switchFilter('movies', this); });
+
+    function switchFilter(type, btn) {
+        currentFilter = type;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTable();
     }
 </script>
 </body>
