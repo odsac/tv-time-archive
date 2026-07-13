@@ -3,60 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيقي الشخصي - TV Time Archive</title>
+    <title>تطبيقي الشخصي المطور - TV Time</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0c0c0e; color: #f5f5f7; margin: 0; padding: 20px; direction: rtl; }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        /* الهيدر العلوي */
         header { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #16161a; border-radius: 14px; margin-bottom: 25px; border: 1px solid #232329; }
         header h1 { margin: 0; color: #ffcc00; font-size: 24px; }
         
-        /* منطقة الرفع */
         .upload-section { background: #16161a; padding: 30px; border-radius: 14px; text-align: center; border: 2px dashed #ffcc00; margin-bottom: 25px; cursor: pointer; }
         .upload-btn { background: #ffcc00; color: #0c0c0e; padding: 12px 30px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 10px; cursor: pointer; }
         
-        /* لوحة الإحصائيات الشبيهة بـ TV Time */
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: linear-gradient(135deg, #16161a, #1f1f26); padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #232329; position: relative; overflow: hidden; }
+        .stat-card { background: linear-gradient(135deg, #16161a, #1f1f26); padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #232329; position: relative; }
         .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #ffcc00; }
         .stat-card h3 { margin: 0 0 10px 0; color: #a0a0ab; font-size: 14px; }
         .stat-card .number { font-size: 32px; font-weight: bold; color: #ffcc00; }
 
-        /* التحكم والبحث والإضافة الجديدة */
         .controls-bar { background: #16161a; padding: 15px; border-radius: 14px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border: 1px solid #232329; }
-        .search-box { flex: 1; min-width: 280px; position: relative; }
+        .search-box { flex: 1; min-width: 280px; }
         .search-box input { width: 100%; padding: 12px 15px; background: #0c0c0e; border: 1px solid #232329; border-radius: 8px; color: white; font-size: 15px; }
         .filter-tabs { display: flex; gap: 8px; }
-        .tab-btn { background: #232329; color: #a0a0ab; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .tab-btn { background: #232329; color: #a0a0ab; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .tab-btn.active { background: #ffcc00; color: #0c0c0e; }
         
-        /* إضافة حلقة جديدة يدوياً للتمكن من التحديث مستقبلاً */
         .add-manual-btn { background: #00cc66; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        /* شبكة عرض المسلسلات والأفلام (البوستر والأسماء الحقيقية) */
         .shows-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
-        .show-card { background: #16161a; border-radius: 12px; overflow: hidden; border: 1px solid #232329; transition: transform 0.2s, box-shadow 0.2s; position: relative; display: flex; flex-direction: column; }
-        .show-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+        .show-card { background: #16161a; border-radius: 12px; overflow: hidden; border: 1px solid #232329; transition: transform 0.2s; position: relative; display: flex; flex-direction: column; }
+        .show-card:hover { transform: translateY(-5px); }
         
         .poster-wrapper { width: 100%; aspect-ratio: 2/3; background: #232329; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .poster-fallback { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(45deg, #2b2b36, #16161a); text-align: center; padding: 10px; }
-        .poster-letter { font-size: 48px; font-weight: bold; color: #ffcc00; opacity: 0.3; margin-bottom: 5px; }
-        .poster-title-bg { font-size: 12px; color: #a0a0ab; max-height: 40px; overflow: hidden; }
+        .poster-fallback { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(45deg, #1f1f2e, #16161a); text-align: center; padding: 10px; }
+        .poster-letter { font-size: 44px; font-weight: bold; color: #ffcc00; margin-bottom: 5px; text-transform: uppercase; }
         
-        .card-badge { position: absolute; top: 10px; right: 10px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; color: white; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .card-badge { position: absolute; top: 10px; right: 10px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; color: white; z-index: 2; }
         .badge-series { background: #007bff; }
         .badge-movie { background: #dc3545; }
 
         .card-info { padding: 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .card-title { font-size: 14px; font-weight: bold; margin: 0 0 6px 0; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card-detail { font-size: 12px; color: #ffcc00; margin-bottom: 8px; font-weight: 500; }
+        .card-title { font-size: 14px; font-weight: bold; margin: 0 0 6px 0; color: white; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+        .card-detail { font-size: 12px; color: #ffcc00; margin-bottom: 8px; }
         .card-date { font-size: 11px; color: #71717a; margin-top: auto; border-top: 1px solid #232329; padding-top: 6px; }
         
-        .no-results { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #71717a; font-size: 16px; }
+        .no-results { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #71717a; }
         
-        /* النافذة المنبثقة لإضافة محتوى جديد */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; }
         .modal-content { background: #16161a; padding: 25px; border-radius: 14px; width: 90%; max-width: 400px; border: 1px solid #232329; }
         .modal-content h3 { margin-top: 0; color: #ffcc00; }
@@ -64,35 +56,33 @@
         .form-group label { display: block; margin-bottom: 5px; font-size: 13px; color: #a0a0ab; }
         .form-group input, .form-group select { width: 100%; padding: 10px; background: #0c0c0e; border: 1px solid #232329; border-radius: 6px; color: white; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .btn-cancel { background: #333; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; }
-        .btn-save { background: #00cc66; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>🎬 أرشيف وتطبيق تفاعلاتي لـ TV Time</h1>
+        <h1>🎬 أرشيف تفاعلاتي لـ TV Time</h1>
         <button class="add-manual-btn" onclick="openModal()">➕ إضافة عمل جديد</button>
     </header>
 
     <div class="upload-section" id="uploadSection" onclick="document.getElementById('fileInput').click()">
-        <p style="font-size: 18px; margin: 0 0 10px 0; color: #ffcc00; font-weight: bold;">مرحباً بكِ في مكتبتكِ الشخصية!</p>
-        <p style="margin: 0; color: #a0a0ab;">اضغطي هنا وحددي ملف <strong>tvtime-series-episodes</strong> وملف <strong>tvtime-movies</strong> معاً لرفع التاريخ بالكامل</p>
-        <button class="upload-btn">رفع ملفات الـ CSV المفكوكة</button>
+        <p style="font-size: 18px; margin: 0 0 10px 0; color: #ffcc00; font-weight: bold;">اضغطي هنا وحددي الملفات الأربعة معاً!</p>
+        <p style="margin: 0; color: #a0a0ab;">حددي جميع ملفات الـ CSV المستخرجة ليقوم المحرك الذكي بتنظيف الأكواد وإظهار الأسماء والبوسترات الحقيقية</p>
+        <button class="upload-btn">اختيار الملفات الأربعة</button>
         <input type="file" id="fileInput" multiple accept=".csv" style="display:none;">
     </div>
 
     <div class="stats-row">
-        <div class="stat-card"><h3>إجمالي الحلقات المشاهدة</h3><div class="number" id="statEpisodes">0</div></div>
-        <div class="stat-card"><h3>إجمالي الأفلام المؤرشفة</h3><div class="number" id="statMovies">0</div></div>
-        <div class="stat-card"><h3>عدد المسلسلات الفريدة</h3><div class="number" id="statUniqueShows">0</div></div>
-        <div class="stat-card"><h3>حالة المزامنة</h3><div class="number" style="font-size:16px; color:#00cc66;" id="statStatus">جاهز لاستقبال البيانات</div></div>
+        <div class="stat-card"><h3>الحلقات المشاهدة</h3><div class="number" id="statEpisodes">0</div></div>
+        <div class="stat-card"><h3>الأفلام المؤرشفة</h3><div class="number" id="statMovies">0</div></div>
+        <div class="stat-card"><h3>المسلسلات الفريدة</h3><div class="number" id="statUniqueShows">0</div></div>
+        <div class="stat-card"><h3>حالة المزامنة</h3><div class="number" style="font-size:16px; color:#ffcc00;" id="statStatus">بانتظار الملفات</div></div>
     </div>
 
     <div class="controls-bar">
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="ابحثي عن اسم مسلسل أو فيلم بالاسم الحقيقي...">
+            <input type="text" id="searchInput" placeholder="ابحثي عن اسم مسلسل أو فيلم...">
         </div>
         <div class="filter-tabs">
             <button class="tab-btn active" id="tabAll">الكل</button>
@@ -102,31 +92,19 @@
     </div>
 
     <div class="shows-grid" id="showsGrid">
-        <div class="no-results">يرجى رفع ملفاتكِ المفكوكة في الأعلى ليتم توليد أرشيفكِ المرئي الجميل هنا.</div>
+        <div class="no-results">يرجى رفع الملفات الأربعة لإنشاء التصميم الحقيقي الخالي من الأكواد.</div>
     </div>
 </div>
 
 <div class="modal" id="addModal">
     <div class="modal-content">
-        <h3>إضافة مشاهدة جديدة للاتشيف</h3>
-        <div class="form-group">
-            <label>النوع</label>
-            <select id="addType">
-                <option value="show">مسلسل</option>
-                <option value="movie">فيلم</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>اسم العمل (بالكامل)</label>
-            <input type="text" id="addTitle" placeholder="مثال: Breaking Bad">
-        </div>
-        <div class="form-group" id="epGroup">
-            <label>الموسم والحلقة</label>
-            <input type="text" id="addDetail" placeholder="مثال: الموسم 1 - الحلقة 5">
-        </div>
+        <h3>إضافة مشاهدة جديدة</h3>
+        <div class="form-group"><label>النوع</label><select id="addType"><option value="show">مسلسل</option><option value="movie">فيلم</option></select></div>
+        <div class="form-group"><label>اسم العمل</label><input type="text" id="addTitle" placeholder="مثال: Game of Thrones"></div>
+        <div class="form-group" id="epGroup"><label>الموسم والحلقة</label><input type="text" id="addDetail" placeholder="مثال: الموسم 1 - الحلقة 1"></div>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
-            <button class="btn-save" onclick="saveManualEntry()">حفظ في الأرشيف</button>
+            <button style="background:#333; color:white; padding:8px 15px; border:none; border-radius:6px; cursor:pointer;" onclick="closeModal()">إلغاء</button>
+            <button style="background:#00cc66; color:white; padding:8px 15px; border:none; border-radius:6px; cursor:pointer;" onclick="saveManualEntry()">حفظ</button>
         </div>
     </div>
 </div>
@@ -135,205 +113,107 @@
     let globalData = [];
     let currentFilter = 'all';
     
-    // محرك قراءة الملفات المرفوعة
+    // دوال مساعدة لفحص النصوص والأكواد المعقدة
+    function isUUID(str) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str.trim());
+    }
+
+    function cleanTitle(str) {
+        if (!str) return 'عمل غير معروف';
+        return str.replace(/^["']|["']$/g, '').trim();
+    }
+
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const files = e.target.files;
         if(!files || files.length === 0) return;
 
         globalData = [];
         let filesProcessed = 0;
-        let tempEpisodesCount = 0;
-        let tempMoviesCount = 0;
-        let uniqueShowsSet = new Set();
+        let fileDataMap = {};
 
-        document.getElementById('statStatus').innerText = "جاري البناء... ⏳";
-        document.getElementById('statStatus').style.color = "#ffcc00";
+        document.getElementById('statStatus').innerText = "جاري الفرز الذكي... ⏳";
 
+        // المرحلة 1: قراءة كل الملفات المرفوعة وتخزين نصوصها
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const reader = new FileReader();
-            const fileName = file.name.toLowerCase();
+            const name = file.name.toLowerCase();
 
             reader.onload = function(evt) {
                 const text = evt.target.result;
                 const lines = text.split('\n');
+                let parsedRows = [];
 
-                if (lines.length > 1) {
-                    for (let j = 1; j < lines.length; j++) {
-                        if (!lines[j].trim()) continue;
-
-                        // تفكيك متطور لملفات CSV لتفادي تداخل علامات التنصيص والفواصل
-                        let columns = [];
-                        let insideQuote = false;
-                        let currentText = '';
-
-                        for (let k = 0; k < lines[j].length; k++) {
-                            let char = lines[j][k];
-                            if (char === '"') { insideQuote = !insideQuote; }
-                            else if (char === ',' && !insideQuote) { columns.push(currentText.trim()); currentText = ''; }
-                            else { currentText += char; }
-                        }
-                        columns.push(currentText.trim());
-
-                        // التركيز على ملف تفاصيل الحلقات المباشر
-                        if (fileName.includes('episode')) {
-                            let showName = columns[0] || '';
-                            let seasonNum = columns[1] || '?';
-                            let epNum = columns[2] || '?';
-                            let watchedAt = columns[3] || 'تاريخ غير محدد';
-
-                            if (showName) {
-                                uniqueShowsSet.add(showName);
-                                tempEpisodesCount++;
-
-                                // دمج تكرار المسلسل لتظهر كبطاقة عرض موحدة بآخر حلقة شاهدتيها لجمالية التصميم
-                                let existing = globalData.find(x => x.title === showName && x.type === 'show');
-                                if (!existing) {
-                                    globalData.push({
-                                        type: 'show',
-                                        title: showName,
-                                        detail: `الموسم ${seasonNum} • الحلقة ${epNum}`,
-                                        date: watchedAt
-                                    });
-                                } else {
-                                    // تحديث البطاقة لتعرض أحدث حلقة دائماً
-                                    existing.detail = `الموسم ${seasonNum} • الحلقة ${epNum}`;
-                                }
-                            }
-                        } 
-                        // معالجة ملف الأفلام
-                        else if (fileName.includes('movie')) {
-                            let movieName = columns[0] || '';
-                            let watchedAt = columns[1] || 'تاريخ غير محدد';
-
-                            if (movieName) {
-                                tempMoviesCount++;
-                                globalData.push({
-                                    type: 'movie',
-                                    title: movieName,
-                                    detail: 'فيلم سينمائي',
-                                    date: watchedAt
-                                });
-                            }
-                        }
+                for(let j=1; j<lines.length; j++) {
+                    if(!lines[j].trim()) continue;
+                    let cols = [];
+                    let insideQuote = false;
+                    let curr = '';
+                    for(let k=0; k<lines[j].length; k++) {
+                        let char = lines[j][k];
+                        if(char === '"') insideQuote = !insideQuote;
+                        else if(char === ',' && !insideQuote) { cols.push(curr.trim()); curr = ''; }
+                        else curr += char;
                     }
+                    cols.push(curr.trim());
+                    parsedRows.push(cols);
                 }
+
+                if (name.includes('episodes')) fileDataMap['episodes'] = parsedRows;
+                else if (name.includes('series') && !name.includes('episodes')) fileDataMap['series'] = parsedRows;
+                else if (name.includes('movie')) fileDataMap['movies'] = parsedRows;
+                else if (name.includes('list')) fileDataMap['lists'] = parsedRows;
 
                 filesProcessed++;
                 if (filesProcessed === files.length) {
-                    // تحديث لوحة التحكم بالبيانات الإجمالية الحقيقية من ملفاتكِ
-                    document.getElementById('statEpisodes').innerText = tempEpisodesCount.toLocaleString();
-                    document.getElementById('statMovies').innerText = tempMoviesCount.toLocaleString();
-                    document.getElementById('statUniqueShows').innerText = uniqueShowsSet.size.toLocaleString();
-                    document.getElementById('statStatus').innerText = "تمت المزامنة بالكامل! ✨";
-                    document.getElementById('statStatus').style.color = "#00cc66";
-                    
-                    // إخفاء صندوق الرفع بعد النجاح
-                    document.getElementById('uploadSection').style.display = 'none';
-                    renderGrid();
+                    processAllData(fileDataMap);
                 }
             };
             reader.readAsText(file);
         }
     });
 
-    // بناء شبكة العرض المرئية مثل تطبيقات الأفلام
-    function renderGrid() {
-        const grid = document.getElementById('showsGrid');
-        grid.innerHTML = '';
-        const searchVal = document.getElementById('searchInput').value.toLowerCase();
-
-        let filtered = globalData.filter(item => {
-            if (currentFilter === 'shows' && item.type !== 'show') return false;
-            if (currentFilter === 'movies' && item.type !== 'movie') return false;
-            if (searchVal && !item.title.toLowerCase().includes(searchVal)) return false;
-            return true;
-        });
-
-        if (filtered.length === 0) {
-            grid.innerHTML = '<div class="no-results">لا توجد أعمال تطابق البحث الحالي في أرشيفكِ.</div>';
-            return;
+    function processAllData(map) {
+        // قاموس لربط الـ ID بالاسم الحقيقي للمسلسلات
+        let seriesNames = {};
+        if (map['series']) {
+            map['series'].forEach(row => {
+                if (row.length >= 2) {
+                    let id = row[0];
+                    let name = row[1];
+                    if (isUUID(id)) seriesNames[id] = cleanTitle(name);
+                    else if (isUUID(name)) seriesNames[name] = cleanTitle(id);
+                }
+            });
         }
 
-        filtered.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'show-card';
+        let tempEpisodesCount = 0;
+        let tempMoviesCount = 0;
+        let uniqueShows = new Set();
 
-            card.innerHTML = `
-                <div class="card-badge ${item.type === 'show' ? 'badge-series' : 'badge-movie'}">
-                    ${item.type === 'show' ? 'مسلسل' : 'فيلم'}
-                </div>
-                <div class="poster-wrapper">
-                    <div class="poster-fallback">
-                        <div class="poster-letter">${item.title.charAt(0).toUpperCase()}</div>
-                        <div class="poster-title-bg">${item.title}</div>
-                    </div>
-                </div>
-                <div class="card-info">
-                    <h4 class="card-title" title="${item.title}">${item.title}</h4>
-                    <div class="card-detail">${item.detail}</div>
-                    <div class="card-date">🗓️ ${item.date}</div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    }
+        // 1. معالجة الحلقات
+        if (map['episodes']) {
+            map['episodes'].forEach(row => {
+                if(row.length < 2) return;
+                let originalTitle = row[0];
+                let season = row[1] || '?';
+                let ep = row[2] || '?';
+                let date = row[3] || 'تاريخ غير محدد';
 
-    // التبديل وتصنيف المحتوى
-    document.getElementById('searchInput').addEventListener('input', renderGrid);
-    document.getElementById('tabAll').addEventListener('click', function() { switchTab('all', this); });
-    document.getElementById('tabShows').addEventListener('click', function() { switchTab('shows', this); });
-    document.getElementById('tabMovies').addEventListener('click', function() { switchTab('movies', this); });
+                // إذا كان الاسم عبارة عن كود، نبحث عنه في قاموس الأسماء
+                let finalTitle = cleanTitle(originalTitle);
+                if (isUUID(finalTitle) && seriesNames[finalTitle]) {
+                    finalTitle = seriesNames[finalTitle];
+                }
 
-    function switchTab(type, btn) {
-        currentFilter = type;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderGrid();
-    }
+                if (finalTitle && !isUUID(finalTitle)) {
+                    tempEpisodesCount++;
+                    uniqueShows.add(finalTitle);
 
-    // إدارة إضافة حلقات جديدة يدوياً مستقبلاً
-    function openModal() { document.getElementById('addModal').style.display = 'flex'; }
-    function closeModal() { document.getElementById('addModal').style.display = 'none'; }
-    
-    document.getElementById('addType').addEventListener('change', function() {
-        document.getElementById('epGroup').style.display = this.value === 'movie' ? 'none' : 'block';
-    });
-
-    function saveManualEntry() {
-        const type = document.getElementById('addType').value;
-        const title = document.getElementById('addTitle').value.trim();
-        let detail = document.getElementById('addDetail').value.trim() || 'فيلم سينمائي';
-        
-        if(!title) { alert('الرجاء كتابة اسم العمل أولاً'); return; }
-
-        let today = new Date().toISOString().split('T')[0];
-
-        if(type === 'show') {
-            let existing = globalData.find(x => x.title.toLowerCase() === title.toLowerCase() && x.type === 'show');
-            if(existing) {
-                existing.detail = detail;
-                existing.date = today;
-            } else {
-                globalData.unshift({ type, title, detail, date: today });
-                let currentUnique = parseInt(document.getElementById('statUniqueShows').innerText);
-                document.getElementById('statUniqueShows').innerText = currentUnique + 1;
-            }
-            let currentEp = parseInt(document.getElementById('statEpisodes').innerText.replace(/,/g, ''));
-            document.getElementById('statEpisodes').innerText = (currentEp + 1).toLocaleString();
-        } else {
-            globalData.unshift({ type, title, detail: 'فيلم سينمائي', date: today });
-            let currentMv = parseInt(document.getElementById('statMovies').innerText.replace(/,/g, ''));
-            document.getElementById('statMovies').innerText = (currentMv + 1).toLocaleString();
-        }
-
-        renderGrid();
-        closeModal();
-        
-        // مسح محتوى الفروم بعد الحفظ
-        document.getElementById('addTitle').value = '';
-        document.getElementById('addDetail').value = '';
-    }
-</script>
-</body>
-</html>
+                    let existing = globalData.find(x => x.title === finalTitle && x.type === 'show');
+                    if (!existing) {
+                        globalData.push({
+                            type: 'show',
+                            title: finalTitle,
+                            detail: `الموسم ${season} • الحلقة ${ep}`,
+                            date
